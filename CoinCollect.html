@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>Mini games|CollectCoin</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: rgb(23, 23, 23);
+    }
+
+    #game-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      background-color: rgb(23, 23, 23);
+    }
+
+    #player {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background-image: url('Mario.png');
+      background-size: contain;
+    }
+
+    .square {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background-image: url('Coin.png');
+      background-size: cover;
+    }
+
+    .special-square {
+      background-image: url('Special-Coin.png');
+      width: 141px;
+      height: 141px;
+    }
+
+    #score {
+      color: white;
+      font: message-box;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 24px;
+    }
+
+    #timer {
+      color: white;
+      font: message-box;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 24px;
+    }
+
+    #game-over {
+      color: white;
+      font: message-box;
+      font-size: 48px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+    }
+
+    #win {
+      color: white;
+      font: message-box;
+      font-size: 48px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+    }
+
+    #left-button,
+    #right-button {
+      position: absolute;
+      bottom: 10px; /* Adjusted position for phones */
+      font-size: 100px;
+      background-color: transparent;
+      color: silver;
+      border-radius: 20%;
+      width: 150px;
+      height: 150px;
+      border: 2px solid silver;
+    }
+
+    #left-button {
+      left: 150px;
+      bottom: 20px;
+    }
+
+    #right-button {
+      right: 150px;
+      bottom: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="game-container">
+    <button id="left-button">⬅</button>
+    <button id="right-button">➞</button>
+    <div id="player"></div>
+  </div>
+  <div id="score">Coins: 0</div>
+  <div id="timer">Time Left: 10</div>
+  <button id="start-button">Start</button>
+  <div id="win">Your Coins: 0</div>
+  <button id="restart-button">Restart</button>
+
+  <script>
+    const gameContainer = document.getElementById("game-container");
+    const player = document.getElementById("player");
+    const playerWidth = player.offsetWidth;
+    const leftButton = document.getElementById("left-button");
+    const rightButton = document.getElementById("right-button");
+    const scoreDisplay = document.getElementById("score");
+    const timerDisplay = document.getElementById("timer");
+
+    let playerX = gameContainer.clientWidth / 2 - playerWidth / 2;
+    let playerY = gameContainer.clientHeight - player.offsetHeight;
+
+    player.style.left = playerX + "px";
+    player.style.top = playerY + "px";
+
+    let gameStarted = false;
+
+    function startGame() {
+  gameStarted = true;
+  document.getElementById("start-button").style.display = "none"; // Hide the start buttona
+
+  // Start the game loop and timer
+  gameLoopInterval = setInterval(createSquare, 2000);
+  createSquare(); // Create the first square immediately
+  timerInterval = setInterval(updateTimeLeft, 850);
+}
+
+
+    document.getElementById("start-button").addEventListener("click", startGame);
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "ArrowLeft" && playerX > 0) {
+        playerX -= 30;
+      } else if (event.key === "ArrowRight" && playerX < gameContainer.clientWidth - playerWidth) {
+        playerX += 30;
+      }
+
+      player.style.left = playerX + "px";
+    });
+
+    leftButton.addEventListener("click", movePlayerLeft);
+    rightButton.addEventListener("click", movePlayerRight);
+
+    let score = 0;
+    let squareSpeed = 10;
+    let gameIsOver = false;
+    let timeIsUp = false; // New flag to track if time is up
+
+    function createSquare() {
+  if (gameIsOver || timeIsUp) {
+    return;
+  }
+
+  const square = document.createElement("div");
+  square.classList.add("square");
+
+  // Calculate the random position within the area between the right side of the left button and the left side of the right button
+  const minLeft = leftButton.getBoundingClientRect().right; // Right side of the left button
+  const maxLeft = rightButton.getBoundingClientRect().left - square.offsetWidth; // Left side of the right button minus square width
+  square.style.left = Math.random() * (maxLeft - minLeft) + minLeft + "px";
+
+  square.style.top = "0";
+  gameContainer.appendChild(square);
+
+  const squareInterval = setInterval(function () {
+    if (gameIsOver || timeIsUp) {
+      clearInterval(squareInterval);
+      return;
+    }
+
+    const squareTop = square.offsetTop;
+    if (squareTop > gameContainer.clientHeight) {
+      clearInterval(squareInterval);
+      gameContainer.removeChild(square);
+    } else {
+      square.style.top = squareTop + squareSpeed + "px";
+
+      if (
+        squareTop + square.offsetHeight > parseInt(player.style.top) &&
+        parseInt(player.style.top) + player.offsetHeight > squareTop &&
+        playerX + playerWidth > parseInt(square.style.left) &&
+        playerX < parseInt(square.style.left) + square.offsetWidth
+      ) {
+        clearInterval(squareInterval);
+        gameContainer.removeChild(square);
+        score += 1;
+        updateScore();
+      }
+    }
+  }, 10);
+}
+
+ 
+    function resetButtonColor(button) {
+    button.style.color = "silver";
+  }
+
+leftButton.addEventListener("click", function() {
+    leftButton.style.color = "white"; // Change text color to white on click
+    setTimeout(() => resetButtonColor(leftButton), 100); // Reset the text color after 100 milliseconds
+  });
+
+  rightButton.addEventListener("click", function() {
+    rightButton.style.color = "white"; // Change text color to white on click
+    setTimeout(() => resetButtonColor(rightButton), 100); // Reset the text color after 100 milliseconds
+  });
+
+    function updateScore() {
+      scoreDisplay.textContent = "Coins: " + score;
+    }
+
+    function movePlayerLeft() {
+  if (playerX > leftButton.getBoundingClientRect().right && !gameIsOver && !timeIsUp) {
+    playerX -= 30;
+    player.style.left = playerX + "px";
+  }
+}
+
+function movePlayerRight() {
+  if (playerX + playerWidth < rightButton.getBoundingClientRect().left && !gameIsOver && !timeIsUp) {
+    playerX += 30;
+    player.style.left = playerX + "px";
+  }
+}
+
+    leftButton.addEventListener("mousedown", () => {
+      leftButtonTimeout = setTimeout(movePlayerLeft, 100);
+    });
+
+    leftButton.addEventListener("mouseup", () => {
+      clearTimeout(leftButtonTimeout);
+    });
+
+    leftButton.addEventListener("mouseleave", () => {
+      clearTimeout(leftButtonTimeout);
+    });
+
+    rightButton.addEventListener("mousedown", () => {
+      rightButtonTimeout = setTimeout(movePlayerRight, 100);
+    });
+
+    rightButton.addEventListener("mouseup", () => {
+      clearTimeout(rightButtonTimeout);
+    });
+
+    rightButton.addEventListener("mouseleave", () => {
+      clearTimeout(rightButtonTimeout);
+    });
+
+    let timeLeft = 11; // Initial time in seconds
+
+    function updateTimeLeft() {
+      if (timeLeft > 0 && !gameIsOver) {
+        timeLeft--;
+        timerDisplay.textContent = "Time Left: " + timeLeft;
+      } else {
+        timeIsUp = true; // Set the timeIsUp flag to true
+        endGame(false); // Player runs out of time (loses)
+      }
+    }
+
+    function endGame(win) {
+      gameIsOver = true;
+      leftButton.disabled = true;
+      rightButton.disabled = true;
+
+      clearInterval(gameLoopInterval);
+      clearInterval(timerInterval);
+
+      if (win) {
+        document.getElementById("win").style.display = "block";
+        document.getElementById("win").textContent = "Your Coins: " + score;
+      } else {
+        document.getElementById("game-over").style.display = "block";
+      }
+    }
+    startGame();
+  </script>
+</body>
+
+</html>
